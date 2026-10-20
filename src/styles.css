@@ -1,0 +1,87 @@
+:root {
+  --bg: #f6f3ec;
+  --surface: #fffdf8;
+  --ink: #1f2a24;
+  --muted: #6b746e;
+  --line: #e2ddd1;
+  --accent: #2f4a3a;
+  --good: #3f7d4f;
+  --miss: #b0563b;
+  --touch: 56px;
+  --radius: 16px;
+  font-family: -apple-system, 'SF Pro Rounded', 'PingFang SC', 'Hiragino Sans GB', system-ui, sans-serif;
+  font-size: 20px;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161a17;
+    --surface: #1f2420;
+    --ink: #ecebe5;
+    --muted: #9aa39d;
+    --line: #2f3631;
+    --accent: #9cc4a8;
+  }
+}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.screen {
+  min-height: 100%;
+  padding: max(24px, env(safe-area-inset-top)) max(32px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(32px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+h1 { margin: 0; font-size: 2rem; font-weight: 600; letter-spacing: 0.02em; }
+.lead { font-size: 1.6rem; margin: 0; }
+.muted { color: var(--muted); margin: 0; }
+.empty {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 8px;
+}
+.btn, .gate {
+  min-height: var(--touch);
+  min-width: var(--touch);
+  padding: 0 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.btn.primary { background: var(--accent); color: var(--bg); border-color: transparent; }
+.btn.ghost { background: transparent; border-color: transparent; }
+.gate {
+  position: relative;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8rem;
+  -webkit-touch-callout: none;
+}
+.gate::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 4px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.gate.holding::after { transform: scaleX(1); transition: transform var(--hold-ms) linear; }
