@@ -21,6 +21,21 @@ enum Mastery {
         item.lastSeenSession = session
     }
 
+    /// Drill sessions stop at the next item boundary after this long.
+    static let sessionCap: TimeInterval = 5 * 60
+
+    /// Drill: items still being learned. Fresh misses first, then items one clean recall
+    /// away from mastery; each group shuffled so order can't be memorised.
+    static func drillPool(_ sheet: Sheet) -> [Item] {
+        let learning = sheet.orderedItems.filter { $0.status == .learning }
+        return learning.filter { $0.cleanStreak == 0 }.shuffled() + learning.filter { $0.cleanStreak > 0 }.shuffled()
+    }
+
+    /// Mock unlocks when every item is mastered, or when a parent overrides.
+    static func mockReady(_ sheet: Sheet) -> Bool {
+        !sheet.items.isEmpty && (sheet.mockUnlocked || sheet.items.allSatisfy { $0.status == .mastered })
+    }
+
     /// Learn covers new items; once none are new it re-teaches anything not yet mastered.
     static func learnPool(_ sheet: Sheet) -> [Item] {
         let items = sheet.orderedItems

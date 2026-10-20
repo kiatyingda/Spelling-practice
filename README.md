@@ -50,7 +50,7 @@ and a typecheck of `server/`. A step counts as shipped only when CI is green on 
 1. ~~Project shell, parent gate, CI, server skeleton~~
 2. ~~SwiftData models + sheet editor + TTS + settings~~
 3. ~~Learn mode (PencilKit / hanzi-writer) + hints~~
-4. Drill + mastery rules
+4. ~~Drill + mastery rules~~
 5. `/api/vision` + document scanner capture
 6. Mock 听写 + photo marking
 7. Results + progress view

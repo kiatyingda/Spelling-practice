@@ -73,7 +73,21 @@ struct SheetEditorView: View {
                     .disabled(paste.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
-                if sheet != nil {
+                if let sheet {
+                    Panel {
+                        Toggle(isOn: Binding(
+                            get: { sheet.mockUnlocked },
+                            set: { sheet.mockUnlocked = $0; try? context.save() }
+                        )) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Allow Mock 听写 now").font(.headline)
+                                Text("Normally it unlocks once every item is mastered.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.muted)
+                            }
+                        }
+                        .frame(minHeight: Theme.touch)
+                    }
                     Button("Delete sheet", role: .destructive) { confirmDelete = true }
                         .buttonStyle(.surface)
                         .foregroundStyle(Theme.miss)

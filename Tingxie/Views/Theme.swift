@@ -38,15 +38,26 @@ struct SurfaceButtonStyle: ButtonStyle {
     var compact = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.body.weight(.medium))
-            .padding(.horizontal, compact ? 0 : 24)
-            .frame(minWidth: Theme.touch, minHeight: Theme.touch)
-            .foregroundStyle(prominent ? Theme.background : Theme.ink)
-            .background(prominent ? Theme.accent : Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radius))
-            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(prominent ? .clear : Theme.line))
-            .opacity(configuration.isPressed ? 0.7 : 1)
-            .contentShape(RoundedRectangle(cornerRadius: Theme.radius))
+        StyledLabel(configuration: configuration, prominent: prominent, compact: compact)
+    }
+
+    private struct StyledLabel: View {
+        let configuration: Configuration
+        let prominent: Bool
+        let compact: Bool
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(.body.weight(.medium))
+                .padding(.horizontal, compact ? 0 : 24)
+                .frame(minWidth: Theme.touch, minHeight: Theme.touch)
+                .foregroundStyle(prominent ? Theme.background : Theme.ink)
+                .background(prominent ? Theme.accent : Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radius))
+                .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(prominent ? .clear : Theme.line))
+                .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+                .contentShape(RoundedRectangle(cornerRadius: Theme.radius))
+        }
     }
 }
 

@@ -1,10 +1,14 @@
 import SwiftData
 import SwiftUI
 
-/// One practice session. Learn: hear it, see it once, hide, write from memory.
+/// One practice session.
+/// Learn: hear it, see it once, hide, write from memory.
+/// Drill: hear it, write it. Misses come back once at the end; capped at ~5 minutes.
 struct PracticeView: View {
     enum Mode {
-        case learn
+        case learn, drill
+
+        var log: SessionMode { self == .learn ? .learn : .drill }
     }
 
     private enum Phase {
@@ -25,6 +29,8 @@ struct PracticeView: View {
     /// First result per item this session (retries don't overwrite it).
     @State private var results: [UUID: Bool] = [:]
     @State private var logged = false
+    @State private var requeued: Set<UUID> = []
+    @State private var timeUp = false
 
     private var current: Item? { queue.indices.contains(index) ? queue[index] : nil }
 
@@ -41,10 +47,11 @@ struct PracticeView: View {
         }
         .screen()
         .onAppear {
-            if queue.isEmpty { queue = Mastery.learnPool(sheet) }
+            if queue.isEmpty { queue = mode == .learn ? Mastery.learnPool(sheet) : Mastery.drillPool(sheet) }
         }
         .task(id: "\(index)-\(phase)") {
-            if phase == .show, let item = current { await say(item) }
+            let speaks = phase == .show || (phase == .write && mode == .drill)
+            if speaks, let item = current { await say(item) }
         }
         .onDisappear { Speech.shared.stop() }
     }
@@ -76,11 +83,11 @@ struct PracticeView: View {
     private var ready: some View {
         VStack(spacing: 16) {
             Text(sheet.title).font(.system(.largeTitle, design: .rounded).weight(.semibold))
-            Text(queue.isEmpty ? "Everything here is mastered." : "\(queue.count) to learn. Listen, look, then write it from memory.")
+            Text(readyText)
                 .font(.title3)
                 .foregroundStyle(Theme.muted)
             if !queue.isEmpty {
-                Button("Start") { phase = .show }
+                Button("Start") { phase = firstPhase }
                     .buttonStyle(.prominentSurface)
                     .font(.title2)
                     .padding(.top, 16)
@@ -140,7 +147,13 @@ struct PracticeView: View {
     private var done: some View {
         let clean = results.values.filter { $0 }.count
         return VStack(spacing: 20) {
-            Text("Done for now").font(.system(.largeTitle, design: .rounded).weight(.semibold))
+            Text(timeUp ? "That's enough for today" : "Done for now")
+                .font(.system(.largeTitle, design: .rounded).weight(.semibold))
+            if timeUp {
+                Text("Short and often works best. Come back later for more.")
+                    .font(.title3)
+                    .foregroundStyle(Theme.muted)
+            }
             Text("\(clean) clean · \(results.count - clean) to practise")
                 .font(.title3)
                 .foregroundStyle(Theme.muted)
@@ -153,6 +166,17 @@ struct PracticeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private var firstPhase: Phase { mode == .learn ? .show : .write }
+
+    private var readyText: String {
+        switch (mode, queue.isEmpty) {
+        case (.learn, true): "Everything here is mastered."
+        case (.drill, true): "Nothing to drill right now."
+        case (.learn, false): "\(queue.count) to learn. Listen, look, then write it from memory."
+        case (.drill, false): "\(queue.count) to practise. Listen, then write it."
+        }
+    }
+
     // MARK: Actions
 
     private func say(_ item: Item) async {
@@ -163,6 +187,11 @@ struct PracticeView: View {
         guard let item = current else { return }
         Mastery.apply(clean: clean, to: item, session: sessionId)
         if results[item.id] == nil { results[item.id] = clean }
+        // Drill: one more go at a miss before the session ends.
+        if mode == .drill, !clean, !requeued.contains(item.id) {
+            requeued.insert(item.id)
+            queue.append(item)
+        }
         try? context.save()
         lastClean = clean
         phase = .result
@@ -170,11 +199,12 @@ struct PracticeView: View {
 
     private func advance() {
         index += 1
-        if index >= queue.count {
+        timeUp = mode == .drill && index < queue.count && Date().timeIntervalSince(startedAt) >= Mastery.sessionCap
+        if index >= queue.count || timeUp {
             logSession()
             phase = .done
         } else {
-            phase = .show
+            phase = firstPhase
         }
     }
 
@@ -182,7 +212,7 @@ struct PracticeView: View {
         guard !logged, !results.isEmpty else { return }
         logged = true
         context.insert(SessionLog(
-            sheetId: sheet.id, mode: .learn, startedAt: startedAt, endedAt: .now,
+            sheetId: sheet.id, mode: mode.log, startedAt: startedAt, endedAt: .now,
             masteredCount: sheet.count(.mastered)))
         try? context.save()
     }
