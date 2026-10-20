@@ -41,6 +41,13 @@ Enhanced Chinese (China mainland) and English (UK) voice. Then pick them in the 
 |---|---|
 | `ANTHROPIC_API_KEY` | your Anthropic key |
 | `APP_TOKEN` | any long random string; same value in `Config/Secrets.xcconfig` |
+| `DAILY_CAP` | optional, requests per day (Singapore time), default 60 |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | optional; add Upstash Redis from the Vercel Marketplace so the cap holds across instances (without it the cap is per warm instance) |
+
+`POST /api/vision` (header `x-app-token`) takes up to 4 base64 JPEG pages and either extracts a
+sheet (`task: "extract"`) or marks written answers against the expected items (`task: "mark"`),
+using `claude-sonnet-5-5` with structured output. Then in the app: Parent → Voices & pace → set the
+server URL (or put `API_BASE_URL` in Secrets.xcconfig).
 
 ## CI
 `.github/workflows/ios.yml` runs on every push: XcodeGen → `xcodebuild build test` on an iPad simulator,
@@ -51,7 +58,7 @@ and a typecheck of `server/`. A step counts as shipped only when CI is green on 
 2. ~~SwiftData models + sheet editor + TTS + settings~~
 3. ~~Learn mode (PencilKit / hanzi-writer) + hints~~
 4. ~~Drill + mastery rules~~
-5. `/api/vision` + document scanner capture
+5. ~~`/api/vision` + document scanner capture~~
 6. Mock 听写 + photo marking
 7. Results + progress view
 

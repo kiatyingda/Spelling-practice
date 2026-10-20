@@ -4,6 +4,7 @@ import SwiftUI
 /// Create or edit a sheet. The photo-capture confirm screen (step 5) reuses it with a pre-filled draft.
 struct SheetEditorView: View {
     let sheet: Sheet?
+    let title: String?
     let onClose: () -> Void
 
     @Environment(\.modelContext) private var context
@@ -12,16 +13,17 @@ struct SheetEditorView: View {
     @State private var showEmptyAlert = false
     @State private var confirmDelete = false
 
-    init(draft: SheetDraft, sheet: Sheet?, onClose: @escaping () -> Void) {
+    init(draft: SheetDraft, sheet: Sheet?, title: String? = nil, onClose: @escaping () -> Void) {
         _draft = State(initialValue: draft)
         self.sheet = sheet
+        self.title = title
         self.onClose = onClose
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                ScreenHeader(title: sheet == nil ? "New sheet" : "Edit sheet") {
+                ScreenHeader(title: title ?? (sheet == nil ? "New sheet" : "Edit sheet")) {
                     Button("← Cancel", action: onClose).buttonStyle(.surface)
                 } trailing: {
                     Button("Save", action: save).buttonStyle(.prominentSurface)

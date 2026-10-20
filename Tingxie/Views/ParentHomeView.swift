@@ -4,6 +4,7 @@ import SwiftUI
 enum ParentRoute: Hashable {
     case newSheet(Lang)
     case edit(Sheet)
+    case capture
     case settings
 }
 
@@ -23,8 +24,10 @@ struct ParentHomeView: View {
                         Button("Voices & pace") { path.append(.settings) }.buttonStyle(.surface)
                     }
                     HStack(spacing: 12) {
-                        Button("+ 中文 听写 sheet") { path.append(.newSheet(.zh)) }.buttonStyle(.prominentSurface)
-                        Button("+ English spelling sheet") { path.append(.newSheet(.en)) }.buttonStyle(.prominentSurface)
+                        Button { path.append(.capture) } label: { Label("Scan a sheet", systemImage: "doc.viewfinder") }
+                            .buttonStyle(.prominentSurface)
+                        Button("+ 中文 听写 sheet") { path.append(.newSheet(.zh)) }.buttonStyle(.surface)
+                        Button("+ English spelling sheet") { path.append(.newSheet(.en)) }.buttonStyle(.surface)
                     }
                     if sheets.isEmpty {
                         Text("No sheets yet. Add this week's list.").foregroundStyle(Theme.muted)
@@ -46,6 +49,8 @@ struct ParentHomeView: View {
                         SheetEditorView(draft: SheetDraft(lang: lang), sheet: nil) { path.removeLast() }
                     case .edit(let sheet):
                         SheetEditorView(draft: SheetDraft(sheet: sheet), sheet: sheet) { path.removeLast() }
+                    case .capture:
+                        CaptureView { path.removeLast() }
                     case .settings:
                         SettingsView { path.removeLast() }
                     }
