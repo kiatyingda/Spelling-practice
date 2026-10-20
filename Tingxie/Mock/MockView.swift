@@ -6,6 +6,8 @@ import SwiftUI
 struct MockView: View {
     let sheet: Sheet
     let onClose: () -> Void
+    /// Called from the results screen to go straight into Drill on the misses.
+    var onDrill: (() -> Void)?
 
     private enum Stage: Equatable {
         case intro, reading, finished, marking, review, saved
@@ -233,13 +235,23 @@ struct MockView: View {
     private var saved: some View {
         let missed = marks.filter { !$0.correct }
         return VStack(spacing: 16) {
-            Text(missed.isEmpty ? "Full marks. Test-ready!" : "\(marks.count - missed.count) / \(marks.count)")
-                .font(.system(.largeTitle, design: .rounded).weight(.semibold))
+            Text("\(marks.count - missed.count) / \(marks.count)")
+                .font(.system(size: 96, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+            Text(missed.isEmpty ? "Full marks. Test-ready!" : "Nearly there.")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(missed.isEmpty ? Theme.good : Theme.ink)
             if !missed.isEmpty {
                 Text("These go back to Drill:").foregroundStyle(Theme.muted)
                 Text(missed.map(\.expected).joined(separator: "  ·  ")).font(.title3)
             }
-            Button("Back home", action: onClose).buttonStyle(.prominentSurface).padding(.top, 12)
+            HStack(spacing: 12) {
+                if !missed.isEmpty, let onDrill {
+                    Button("Drill these now", action: onDrill).buttonStyle(.prominentSurface)
+                }
+                Button("Back home", action: onClose).buttonStyle(SurfaceButtonStyle(prominent: missed.isEmpty || onDrill == nil))
+            }
+            .padding(.top, 12)
         }
         .multilineTextAlignment(.center)
     }

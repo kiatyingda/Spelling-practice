@@ -47,7 +47,10 @@ struct ChildHomeView: View {
             if let mode = l.mode {
                 PracticeView(sheet: l.sheet, mode: mode) { launch = nil }
             } else {
-                MockView(sheet: l.sheet) { launch = nil }
+                MockView(sheet: l.sheet, onClose: { launch = nil }, onDrill: {
+                    // Swap the cover for a Drill session on the items just missed.
+                    launch = Launch(sheet: l.sheet, mode: .drill)
+                })
             }
         }
     }

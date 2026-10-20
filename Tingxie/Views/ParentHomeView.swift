@@ -5,6 +5,7 @@ enum ParentRoute: Hashable {
     case newSheet(Lang)
     case edit(Sheet)
     case capture
+    case progress(Sheet)
     case settings
 }
 
@@ -34,8 +35,15 @@ struct ParentHomeView: View {
                     }
                     VStack(spacing: 8) {
                         ForEach(sheets) { sheet in
-                            Button { path.append(.edit(sheet)) } label: { SheetRow(sheet: sheet) }
-                                .buttonStyle(.plain)
+                            HStack(spacing: 8) {
+                                Button { path.append(.edit(sheet)) } label: { SheetRow(sheet: sheet) }
+                                    .buttonStyle(.plain)
+                                Button { path.append(.progress(sheet)) } label: {
+                                    Image(systemName: "chart.xyaxis.line").frame(width: 24)
+                                }
+                                .buttonStyle(SurfaceButtonStyle(compact: true))
+                                .accessibilityLabel("Progress for \(sheet.title)")
+                            }
                         }
                     }
                 }
@@ -49,6 +57,8 @@ struct ParentHomeView: View {
                         SheetEditorView(draft: SheetDraft(lang: lang), sheet: nil) { path.removeLast() }
                     case .edit(let sheet):
                         SheetEditorView(draft: SheetDraft(sheet: sheet), sheet: sheet) { path.removeLast() }
+                    case .progress(let sheet):
+                        ProgressDetailView(sheet: sheet) { path.removeLast() }
                     case .capture:
                         CaptureView { path.removeLast() }
                     case .settings:

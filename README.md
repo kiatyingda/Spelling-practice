@@ -60,7 +60,7 @@ and a typecheck of `server/`. A step counts as shipped only when CI is green on 
 4. ~~Drill + mastery rules~~
 5. ~~`/api/vision` + document scanner capture~~
 6. ~~Mock 听写 + photo marking~~
-7. Results + progress view
+7. ~~Results + progress view~~
 
 ## Notes
 - `Tingxie/Resources/HanziWeb/hanzi-writer.min.js` is hanzi-writer v3.7.3 (MIT), vendored so the
