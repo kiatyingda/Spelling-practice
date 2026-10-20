@@ -22,7 +22,7 @@ Environment Variables.
 
 ## Build order
 1. ~~Scaffold + PWA manifest + Vercel config~~
-2. Sheet CRUD (manual entry) + TTS
+2. ~~Sheet CRUD (manual entry) + TTS~~
 3. Learn mode (zh hanzi-writer, en canvas) + hints
 4. Drill + mastery rules
 5. `/api/vision` sheet extraction
