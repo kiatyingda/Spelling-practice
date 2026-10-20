@@ -59,7 +59,7 @@ struct HanziWriterView: UIViewRepresentable {
     fileprivate func loadScript(traits: UITraitCollection) -> String {
         func hex(_ name: String) -> String {
             var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-            (UIColor(named: name) ?? .label).resolvedColor(with: traits).getRed(&r, &g, &b, &a)
+            (UIColor(named: name) ?? .label).resolvedColor(with: traits).getRed(&r, green: &g, blue: &b, alpha: &a)
             return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
         }
         var strokeData: [String: Any] = [:]
