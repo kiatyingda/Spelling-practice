@@ -1,0 +1,5 @@
+// Shared build settings. Local, per-developer values live in Secrets.xcconfig (gitignored).
+APP_TOKEN =
+API_BASE_URL =
+
+#include? "Secrets.xcconfig"
