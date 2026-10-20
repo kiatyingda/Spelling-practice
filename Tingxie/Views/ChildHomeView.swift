@@ -10,7 +10,8 @@ struct ChildHomeView: View {
     private struct Launch: Identifiable {
         let id = UUID()
         let sheet: Sheet
-        let mode: PracticeView.Mode
+        /// nil means Mock 听写.
+        let mode: PracticeView.Mode?
     }
 
     var body: some View {
@@ -43,14 +44,19 @@ struct ChildHomeView: View {
         }
         .screen()
         .fullScreenCover(item: $launch) { l in
-            PracticeView(sheet: l.sheet, mode: l.mode) { launch = nil }
+            if let mode = l.mode {
+                PracticeView(sheet: l.sheet, mode: mode) { launch = nil }
+            } else {
+                MockView(sheet: l.sheet) { launch = nil }
+            }
         }
     }
 }
 
 private struct SheetCard: View {
     let sheet: Sheet
-    let onPractice: (PracticeView.Mode) -> Void
+    /// nil starts Mock 听写.
+    let onPractice: (PracticeView.Mode?) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -74,11 +80,11 @@ private struct SheetCard: View {
                 }
                 .buttonStyle(SurfaceButtonStyle(prominent: fresh == 0 && learning > 0))
                 .disabled(learning == 0)
-                Button {} label: {
+                Button { onPractice(nil) } label: {
                     Label("Mock", systemImage: mockReady ? "checkmark.seal" : "lock").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.surface)
-                .disabled(true)
+                .buttonStyle(SurfaceButtonStyle(prominent: mockReady))
+                .disabled(!mockReady)
             }
             if !mockReady {
                 Text("Mock 听写 unlocks when everything is mastered.")
