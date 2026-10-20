@@ -5,6 +5,7 @@ struct ChildHomeView: View {
     let onParent: () -> Void
 
     @Query(sort: \Sheet.createdAt, order: .reverse) private var sheets: [Sheet]
+    @State private var practising: Sheet?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -27,17 +28,23 @@ struct ChildHomeView: View {
             } else {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: 20)], spacing: 20) {
-                        ForEach(sheets) { SheetCard(sheet: $0) }
+                        ForEach(sheets) { sheet in
+                            SheetCard(sheet: sheet) { practising = sheet }
+                        }
                     }
                 }
             }
         }
         .screen()
+        .fullScreenCover(item: $practising) { sheet in
+            PracticeView(sheet: sheet, mode: .learn) { practising = nil }
+        }
     }
 }
 
 private struct SheetCard: View {
     let sheet: Sheet
+    let onLearn: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -49,10 +56,9 @@ private struct SheetCard: View {
                 .font(.system(.title2, design: .rounded).weight(.semibold))
             SheetProgressBar(sheet: sheet)
             SheetProgressLegend(sheet: sheet)
-            Button {} label: { Text("Learn").frame(maxWidth: .infinity) }
+            Button(action: onLearn) { Text("Learn").frame(maxWidth: .infinity) }
                 .buttonStyle(.prominentSurface)
-                .disabled(true)
-                .opacity(0.4)
+                .disabled(sheet.items.isEmpty)
         }
         .padding(24)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20))

@@ -20,6 +20,12 @@ targets:
       - path: Tingxie
         excludes:
           - Info.plist
+          - Resources/HanziWeb
+          - Resources/HanziWeb/**
+      # Bundled as a folder so index.html can load hanzi-writer.min.js by relative path.
+      - path: Tingxie/Resources/HanziWeb
+        type: folder
+        buildPhase: resources
     info:
       path: Tingxie/Info.plist
       properties:

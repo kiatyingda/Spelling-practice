@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+  html, body { margin: 0; background: transparent; overflow: hidden; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; padding: 8px; }
+  .box { position: relative; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); }
+  /* 田字格 guide lines */
+  .box::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(var(--line), var(--line)) center / 100% 1px no-repeat,
+                linear-gradient(var(--line), var(--line)) center / 1px 100% no-repeat; }
+  .box.active { border-color: var(--accent); }
+  .box svg { position: relative; }
+  .box.missing, .punct { display: grid; place-items: center; color: var(--muted);
+    font-family: 'PingFang SC', sans-serif; }
+  .punct { color: var(--ink); }
+</style>
+</head>
+<body>
+<div id="row"></div>
+<script src="hanzi-writer.min.js"></script>
+<script>
+  // Bridge: Swift calls TX.load(cfg) / TX.hint(); we post {type, ...} to messageHandlers.tx.
+  const post = (m) => window.webkit?.messageHandlers?.tx?.postMessage(m)
+
+  // Palm rejection: once a stylus has touched, ignore finger/palm touches (hanzi-writer uses touch events).
+  let penSeen = false
+  const guard = (e) => {
+    const ts = [...e.changedTouches]
+    if (!penSeen && ts.some((t) => t.touchType === 'stylus')) {
+      penSeen = true
+      post({ type: 'pen' })
+    }
+    if (penSeen && ts.every((t) => t.touchType === 'direct')) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+  }
+  document.addEventListener('touchstart', guard, { capture: true, passive: false })
+  document.addEventListener('touchmove', guard, { capture: true, passive: false })
+
+  const HAN = /\p{Script=Han}/u
+  let state = null
+
+  window.TX = {
+    /** cfg: { chars: string[], data: {char: strokeJson}, size, colors: {ink, accent, line, surface, muted, hint}, pen } */
+    load(cfg) {
+      if (cfg.pen) penSeen = true
+      const root = document.documentElement.style
+      for (const [k, v] of Object.entries(cfg.colors)) root.setProperty('--' + k, v)
+      const row = document.getElementById('row')
+      row.innerHTML = ''
+      const boxes = cfg.chars.map((ch) => {
+        const el = document.createElement('div')
+        el.style.width = el.style.height = cfg.size + 'px'
+        if (HAN.test(ch)) {
+          el.className = 'box'
+        } else {
+          el.className = 'punct'
+          el.style.width = cfg.size * 0.4 + 'px'
+          el.style.fontSize = cfg.size * 0.6 + 'px'
+          el.textContent = ch
+        }
+        row.appendChild(el)
+        return el
+      })
+      const queue = cfg.chars.map((c, i) => (HAN.test(c) ? i : -1)).filter((i) => i >= 0)
+      state = { cfg, boxes, queue, step: 0, writer: null, stroke: 0 }
+      next(state)
+      post({ type: 'ready', height: document.body.scrollHeight })
+    },
+    /** "Stuck": flash the stroke she needs to write next. */
+    hint() {
+      if (state && state.writer) state.writer.highlightStroke(state.stroke)
+      return state ? state.stroke : -1
+    },
+  }
+
+  function next(s) {
+    if (state !== s) return
+    s.boxes.forEach((b) => b.classList.remove('active'))
+    if (s.step >= s.queue.length) {
+      s.writer = null
+      post({ type: 'complete' })
+      return
+    }
+    const i = s.queue[s.step]
+    const ch = s.cfg.chars[i]
+    const el = s.boxes[i]
+    const data = s.cfg.data[ch]
+    if (!data) {
+      // No stroke data (offline and never cached): show it and move on; it doesn't count either way.
+      el.classList.add('missing')
+      el.style.fontSize = s.cfg.size * 0.7 + 'px'
+      el.textContent = ch
+      post({ type: 'missingData', char: ch })
+      s.step++
+      return next(s)
+    }
+    el.classList.add('active')
+    s.stroke = 0
+    const c = s.cfg.colors
+    s.writer = HanziWriter.create(el, ch, {
+      width: s.cfg.size,
+      height: s.cfg.size,
+      padding: Math.round(s.cfg.size * 0.06),
+      showOutline: false,
+      showCharacter: false,
+      strokeColor: c.ink,
+      drawingColor: c.ink,
+      highlightColor: c.hint,
+      drawingWidth: Math.max(4, Math.round(s.cfg.size / 22)),
+      charDataLoader: (_char, onLoad) => onLoad(data),
+    })
+    s.writer.quiz({
+      showHintAfterMisses: 2,
+      onMistake: (d) => post({ type: 'mistake', char: ch, strokeNum: d.strokeNum, mistakesOnStroke: d.mistakesOnStroke }),
+      onCorrectStroke: (d) => {
+        s.stroke = d.strokeNum + 1
+        post({ type: 'correctStroke', char: ch, strokeNum: d.strokeNum, strokesRemaining: d.strokesRemaining })
+      },
+      onComplete: (d) => {
+        post({ type: 'charComplete', char: ch, index: i, totalMistakes: d.totalMistakes })
+        setTimeout(() => {
+          s.step++
+          next(s)
+        }, 450)
+      },
+    })
+  }
+</script>
+</body>
+</html>
