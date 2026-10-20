@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 @main
@@ -6,6 +7,7 @@ struct TingxieApp: App {
         WindowGroup {
             RootView()
         }
+        .modelContainer(for: [Sheet.self, Item.self, SessionLog.self])
     }
 }
 

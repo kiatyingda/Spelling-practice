@@ -34,11 +34,13 @@ extension View {
 /// Bordered surface button sized for kids.
 struct SurfaceButtonStyle: ButtonStyle {
     var prominent = false
+    /// Square icon buttons drop the horizontal padding.
+    var compact = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.body.weight(.medium))
-            .padding(.horizontal, 24)
+            .padding(.horizontal, compact ? 0 : 24)
             .frame(minWidth: Theme.touch, minHeight: Theme.touch)
             .foregroundStyle(prominent ? Theme.background : Theme.ink)
             .background(prominent ? Theme.accent : Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radius))
